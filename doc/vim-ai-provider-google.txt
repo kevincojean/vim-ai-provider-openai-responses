@@ -1,0 +1,26 @@
+*vim-ai-provider-google.txt*
+
+Author:  Martin Bielik <https://madox2.poriadne.sk/>
+License: see https://github.com/madox2/vim-ai-provider-google/blob/main/LICENSE
+
+INTRODUCTION                                    *vim-ai-provider-google*
+
+vim-ai provider plugin for Google's Gemini models
+
+Configuration (role format): >
+
+  [gemini]
+  provider = google
+  # default fields
+  options.model = gemini-2.0-flash
+  options.endpoint_url = https://generativelanguage.googleapis.com/v1beta/models
+  options.request_timeout = 20
+  # optional fields
+  options.token_file_path = ~/.config/gemini.token
+  options.temperature = 1.0
+  options.max_output_tokens = 800
+  options.top_p = 0.8
+  options.top_k = 10
+  # inherited options from vim-ai
+  options.selection_boundary = ...
+  options.initial_prompt = ...
