@@ -7,7 +7,8 @@
 `vim-ai-provider-google` extension have to be installed after `vim-ai`
 
 ```vim
-Plug 'madox2/vim-ai'
+" this feature is still in development
+Plug 'madox2/vim-ai', { 'branch': 'provider-extensions' }
 Plug 'madox2/vim-ai-provider-google'
 ```
 
