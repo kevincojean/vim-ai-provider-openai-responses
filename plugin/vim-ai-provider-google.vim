@@ -1,7 +1,9 @@
 let g:vim_ai_google_config = {
 \  "model": "gemini-2.0-flash",
+\  "endpoint_url": "https://generativelanguage.googleapis.com/v1beta/models",
 \  "request_timeout": 20,
 "\ optional fields:
+"\  "token_file_path": "~/.config/gemini.token",
 "\  "temperature": 1.0,
 "\  "max_output_tokens": 800,
 "\  "top_p": 0.8,

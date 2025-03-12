@@ -66,7 +66,7 @@ class GoogleAIProvider():
             "Content-Type": "application/json",
             "User-Agent": "VimAI",
         }
-        api_key = self.utils.load_api_key("GEMINI_API_KEY", self.options['token_file_path'])
+        api_key = self.utils.load_api_key("GEMINI_API_KEY", self.options.get('token_file_path', ''))
 
         generationConfig = {
             "temperature": self.options.get('temperature') or None,
