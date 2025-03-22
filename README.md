@@ -25,6 +25,13 @@ or using `token_file_path` configuration:
 options.token_file_path = ~/.config/gemini.token
 ```
 
+## Usage
+
+```ini
+[gemini]
+provider = google
+```
+
 ## Configuration
 
 You can configure a custom role or use vim-ai's configuration variables `g:vim_ai_complete`, `g:vim_ai_edit`, `g:vim_ai_chat`.
