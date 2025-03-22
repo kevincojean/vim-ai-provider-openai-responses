@@ -27,9 +27,20 @@ options.token_file_path = ~/.config/gemini.token
 
 ## Usage
 
+Create a gemeni role:
+
 ```ini
 [gemini]
 provider = google
+options.token_file_path = ~/.config/gemini.token
+```
+
+Or use it as a default:
+
+```ini
+[default]
+provider = google
+options.token_file_path = ~/.config/gemini.token
 ```
 
 ## Configuration
