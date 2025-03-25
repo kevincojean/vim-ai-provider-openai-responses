@@ -56,6 +56,7 @@ options.endpoint_url = https://generativelanguage.googleapis.com/v1beta/models
 options.request_timeout = 20
 # optional fields
 options.token_file_path = ~/.config/gemini.token
+options.token_load_fn =
 options.temperature = 1.0
 options.max_output_tokens = 800
 options.top_p = 0.8

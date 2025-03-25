@@ -24,7 +24,7 @@ class AIUtils(Protocol):
         pass
     def make_known_error(self, message: str):
         pass
-    def load_api_key(self, env_variable: str, file_path: str):
+    def load_api_key(self, env_variable: str, token_file_path: str = "", token_load_fn: str = ""):
         pass
 
 class AIResponseChunk(TypedDict):
@@ -75,7 +75,11 @@ class GoogleAIProvider():
             "Content-Type": "application/json",
             "User-Agent": "VimAI",
         }
-        api_key = self.utils.load_api_key("GEMINI_API_KEY", self.options.get('token_file_path', ''))
+        api_key = self.utils.load_api_key(
+            "GEMINI_API_KEY",
+            token_file_path=self.options.get('token_file_path', ''),
+            token_load_fn=self.options.get('token_load_fn', ''),
+        )
 
         generationConfig = {
             "temperature": self.options.get('temperature') or None,
