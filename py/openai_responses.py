@@ -112,16 +112,7 @@ class OpenAiResponsesProvider:
         if self.options['stream']:
             openai_response: Stream[ResponseStreamEvent]
             for response_event in openai_response:
-                if response_event.type in {
-                    'response.created',
-                    'response.in_progress',
-                    'response.output_item.added',
-                    'response.output_text.done',
-                    'response.content_part.done',
-                    'response.output_item.done',
-                }:
-                    continue
-                elif response_event.type == 'response.content_part.added':
+                if response_event.type == 'response.content_part.added':
                     yield {
                         "type": "assistant",
                         "content": response_event.part.text,
@@ -133,8 +124,36 @@ class OpenAiResponsesProvider:
                     }
                 elif response_event.type == 'response.completed':
                     return
+                elif response_event.type == 'error':
+                    raise Exception(f"Error (code: {response_event.code}) - {response_event.message}")
                 else:
-                    raise Exception(f"Unhandled response_event.type `{response_event.type}`")
+                    continue
+                    # Expected events, which may or may not need to be handled.
+                    # {
+                    #     'response.content_part.done',
+                    #     'response.created',
+                    #     'response.failed',
+                    #     'response.file_search_call.completed',
+                    #     'response.file_search_call.in_progress',
+                    #     'response.file_search_call.searching',
+                    #     'response.function_call_arguments.delta',
+                    #     'response.function_call_arguments.done',
+                    #     'response.in_progress',
+                    #     'response.incomplete',
+                    #     'response.output_item.added',
+                    #     'response.output_item.done',
+                    #     'response.output_text.annotation.added',
+                    #     'response.output_text.done',
+                    #     'response.reasoning_summary_part.added',
+                    #     'response.reasoning_summary_part.done',
+                    #     'response.reasoning_summary_text.delta',
+                    #     'response.reasoning_summary_text.done',
+                    #     'response.refusal.delta',
+                    #     'response.refusal.done',
+                    #     'response.web_search_call.completed',
+                    #     'response.web_search_call.in_progress',
+                    #     'response.web_search_call.searching',
+                    # }
 
     def _map_to_response_input_param(self, message: AIMessage) -> ResponseInputParam:
         if not message['content']:
