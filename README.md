@@ -80,4 +80,4 @@ prompt =
 
 ## License
 
-[MIT License](https://github.com/madox2/vim-ai-google-provider/blob/main/LICENSE)
+[MIT License](https://github.com/kevincojean/vim-ai-provider-openai-responses/blob/main/LICENSE)
