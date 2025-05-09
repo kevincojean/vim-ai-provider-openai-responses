@@ -5,10 +5,10 @@
 ## Installation
 
 1. Ensure `madox2/vim-ai` is installed.
-1. Add `dehidehidehi/vim-ai-provider-openai-responses` to your Vim plugin manager.
+1. Add `kevincojean/vim-ai-provider-openai-responses` to your Vim plugin manager.
     > ```vim
     >  Plug 'madox2/vim-ai'
-    >  Plug 'dehidehidehi/vim-ai-provider-openai-responses'
+    >  Plug 'kevincojean/vim-ai-provider-openai-responses'
     >  ```
 1. The plugin will automatically install the `openai` python plugin after installation.
    > You may disable this behaviour by setting `g:vim_ai_openai_responses_enable_autoinstall = 0` in your `vimrc`. Then you may call the `VimAiOpenAiResponsesInstallDependencies` command to install the dependency manually.

@@ -1,7 +1,7 @@
 *vim-ai-provider-google.txt*
 
 Author: Kevin Cojean <https://kevincojean.com/>
-License: see https://github.com/dehidehidehi/vim-ai-provider-openai-responses/blob/main/LICENSE
+License: see https://github.com/kevincojean/vim-ai-provider-openai-responses/blob/main/LICENSE
 
 INTRODUCTION                                    *vim-ai-provider-openai-responses*
 
