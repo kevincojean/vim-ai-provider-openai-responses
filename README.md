@@ -35,8 +35,23 @@ The list of options you may pass are numerous and documented by OpenAI:
 [https://platform.openai.com/docs/api-reference/responses](https://platform.openai.com/docs/api-reference/responses)
 
 The following flags may be set in your `vimrc` to influence specific behaviours.  
+
 - `g:vim_ai_openai_responses_enable_autoinstall`: `1` to enable auto-install at start, this is slow.
 - `g:vim_ai_openai_responses_config`: overridable configuration for the openai responses api.
+- `g:vim_ai_openai_responses_logging`: set to `1` to enable logging from this plugin, logging will slow down the streaming responses.
+- `g:vim_ai_openai_responses_logging_file`: set to the absolute file path to the log file.
+- `g:vim_ai_openai_responses_ai_logging`: set to `1` to enable logging of OpenAI response, logging will slow down the streaming responses.
+- `g:vim_ai_openai_responses_ai_logging_file`: set to the absolute file path to the log file.
+
+### Example configuration
+
+```vim
+let g:vim_ai_openai_responses_enable_autoinstall = 0
+let g:vim_ai_openai_responses_logging = 1
+let g:vim_ai_openai_responses_ai_logging = 1
+let g:vim_ai_openai_responses_logging_file = "/tmp/vim-ai-openai-responses.log"
+let g:vim_ai_openai_responses_ai_logging_file = "/tmp/vim-ai-openai-responses-ai.log"
+```
 
 ### VimAI configuration example
 

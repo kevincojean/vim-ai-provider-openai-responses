@@ -1,5 +1,29 @@
 let g:my_requirements_file = 'requirements.txt'
 
+if !exists('g:vim_ai_openai_responses_enable_autoinstall')
+    let g:vim_ai_openai_responses_enable_autoinstall = 1
+endif
+if g:vim_ai_openai_responses_enable_autoinstall == 1
+    " Automatically install the required packages from requirements.txt when the plugin is loaded
+    let result = system(GetPipCommand() . ' show openai')
+    if v:shell_error != 0
+        call VimAiOpenAiResponsesInstallDependencies()
+    endif
+endif
+
+if !exists('g:vim_ai_openai_responses_logging')
+    let g:vim_ai_openai_responses_logging = 0
+endif
+if !exists('g:vim_ai_openai_responses_logging_file')
+    let g:vim_ai_openai_responses_logging_file = ""
+endif
+if !exists('g:vim_ai_openai_responses_ai_logging')
+    let g:vim_ai_openai_responses_ai_logging = 0
+endif
+if !exists('g:vim_ai_openai_responses_ai_logging_file')
+    let g:vim_ai_openai_responses_ai_logging_file = ""
+endif
+
 function! GetPipCommand()
     " Get the proper system-specific pip or pip3 command for installation of required packages.
     let pip_command = system('python -m pip --version')
@@ -35,17 +59,6 @@ endfunction
 
 " Command to manually install packages from requirements.txt if needed
 command! VimAiOpenAiResponsesInstallDependencies call VimAiOpenAiResponsesInstallDependencies()
-
-if !exists('g:vim_ai_openai_responses_enable_autoinstall')
-    let g:vim_ai_openai_responses_enable_autoinstall = 1
-endif
-if g:vim_ai_openai_responses_enable_autoinstall == 1
-    " Automatically install the required packages from requirements.txt when the plugin is loaded
-    let result = system(GetPipCommand() . ' show openai')
-    if v:shell_error != 0
-        call VimAiOpenAiResponsesInstallDependencies()
-    endif
-endif
 
 let g:vim_ai_openai_responses_config = {
 \  "model": "gpt-4o-mini",
