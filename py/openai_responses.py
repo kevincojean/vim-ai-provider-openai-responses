@@ -1,4 +1,7 @@
+import logging
+import tempfile
 from collections.abc import Sequence, Mapping, Iterator
+from pathlib import Path
 from typing import TypedDict, Literal, Union, List, Protocol, Any
 
 import openai
@@ -57,6 +60,14 @@ class AIProvider(Protocol):
     def request_image(self, prompt: str) -> list[AIImageResponseChunk]:
         pass
 
+class LoggingConfiguration:
+
+    PLUGIN_DEFAULT_FILE = Path(tempfile.gettempdir()) / "vim-ai-openai-responses.log"
+    OPENAI_DEFAULT_FILE = Path(tempfile.gettempdir()) / "vim-ai-openai-responses-ai.log"
+
+    def __init__(self, enabled: bool = False, file: Path = None):
+        self.enabled: bool = enabled
+        self.file: Path = file
 
 class OpenAiResponsesProvider:
     """
@@ -66,67 +77,69 @@ class OpenAiResponsesProvider:
     def __init__(self, command_type: AICommandType,
                  raw_options: Mapping[str, str],
                  utils: AIUtils,
-                 under_test: bool = False) -> None:
+                 under_test: bool = False,
+                 logging_configuration: LoggingConfiguration = None,
+                 logging_ai_configuration: LoggingConfiguration = None,
+                 ) -> None:
         self.utils = utils
         self.command_type = command_type
-        raw_default_options = {}
-        if not under_test:
-            import vim
-            raw_default_options = vim.eval(f"g:vim_ai_openai_responses_config")
-        self.options = {**raw_default_options, **raw_options}
-        self.options = {**raw_options}
-        for key, value in self.options.items():
-            if isinstance(value, str) and value.replace('.', '', 1).isdigit():
-                self.options[key] = float(value)
-
-        if 'stream' in self.options:
-            self.options['stream'] = self._coerce_to_bool(self.options['stream'])
-
-    def _coerce_to_bool(self, value: str) -> bool:
-        if isinstance(value, str):
-            return value.strip().lower() in ['true', '1', 't', 'y', 'yes']
-        return bool(value)
-
-    def _protocol_type_check(self) -> None:
-        # dummy method, just to ensure type safety
-        utils: AIUtils
-        options: Mapping[str, str] = {}
-        provider: AIProvider = OpenAiResponsesProvider('chat', options, utils)
+        self._set_options(raw_options, under_test)
+        self._set_loggers(logging_configuration, logging_ai_configuration, under_test)
 
     def request(self, messages: Sequence[AIMessage]) -> Iterator[AIResponseChunk]:
         """
         Example: https://github.com/openai/openai-python/blob/main/examples/streaming.py
         """
-        openai_response = openai.responses.create(input=[self._map_to_response_input_param(m) for m in messages],
-                                           model=self.options['model'],
-                                           stream=self.options['stream'])
+        self.logger_plugin.debug("Prompting with: %s", messages)
+        open_ai_messages = [self._map_to_response_input_param(m) for m in messages]
+        self.logger_open_ai.debug("Prompting with: %s", open_ai_messages)
+        self.logger_plugin.debug("Options: %s", self.options)
+        openai_response = openai.responses.create(
+            input=open_ai_messages,
+            model=self.options['model'],
+            stream=bool(self.options['stream']))
         if not self.options['stream']:
+            self.logger_open_ai.debug('Non-streaming response...')
             openai_response: Response
             response_type = openai_response.output[0].role
             response_text = openai_response.output[0].content[0].text
             response_chunk_type = response_type if response_type == "assistant" else "thinking"
-            yield {
+            chunk = {
                 "type": response_chunk_type,
                 "content": response_text,
             }
+            self.logger_open_ai.debug(openai_response)
+            self.logger_plugin.debug(chunk)
+            yield chunk
         if self.options['stream']:
+            self.logger_open_ai.debug('Streaming response...')
             openai_response: Stream[ResponseStreamEvent]
             for response_event in openai_response:
                 if response_event.type == 'response.content_part.added':
-                    yield {
+                    chunk = {
                         "type": "assistant",
                         "content": response_event.part.text,
                     }
+                    self.logger_open_ai.debug(response_event.type + ": " + chunk['content'])
+                    self.logger_plugin.debug(chunk)
+                    yield chunk
                 elif response_event.type == 'response.output_text.delta':
-                    yield {
+                    chunk = {
                         "type": "assistant",
                         "content": response_event.delta,
                     }
+                    self.logger_open_ai.debug(response_event.type + ": " + chunk['content'])
+                    self.logger_plugin.debug(chunk)
+                    yield chunk
                 elif response_event.type == 'response.completed':
+                    self.logger_open_ai.debug(response_event.type)
                     return
                 elif response_event.type == 'error':
-                    raise Exception(f"Error (code: {response_event.code}) - {response_event.message}")
+                    e = Exception(f"Error (code: {response_event.code}) - {response_event.message}")
+                    self.logger_plugin.exception(e)
+                    raise e
                 else:
+                    self.logger_open_ai.debug(response_event.type)
                     continue
                     # Expected events, which may or may not need to be handled.
                     # {
@@ -181,4 +194,96 @@ class OpenAiResponsesProvider:
             }
         else:
             raise Exception(f"Handling of `{first_content_element.__class__.__name__}` messages not implemented.")
+
+    def _set_options(self, raw_options: Mapping[str, str], under_test: bool = False) -> None:
+        self.options = raw_options or {}
+        self.options['stream'] = self._coerce_to_bool(self.options['stream']) \
+            if 'stream' in self.options \
+            else False
+        self.options['stream'] = bool(self.options['stream'])
+        if not under_test:
+            import vim
+            self.options = self.options | vim.eval(f"g:vim_ai_openai_responses_config") or {}
+        for key, value in self.options.items():
+            if isinstance(value, str) and value.replace('.', '', 1).isdigit():
+                self.options[key] = float(value)
+
+    def _coerce_to_bool(self, value: str) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, str):
+            return value.strip().lower() in ['true', '1', 't', 'y', 'yes']
+        return bool(value)
+
+    def _protocol_type_check(self) -> None:
+        # dummy method, just to ensure type safety
+        utils: AIUtils
+        options: Mapping[str, str] = {}
+        provider: AIProvider = OpenAiResponsesProvider('chat', options, utils)
+
+    def _set_loggers(self,
+                     logging_configuration: LoggingConfiguration,
+                     logging_ai_configuration: LoggingConfiguration,
+                     under_test: bool) -> None:
+        enable_logging = False
+        enable_logging_ai = False
+
+        if under_test:
+            enable_logging = logging_configuration.enabled
+            logging_file = logging_configuration.file
+            enable_logging_ai = logging_ai_configuration.enabled
+            logging_ai_file = logging_ai_configuration.file
+            if enable_logging:
+                self.logging_file = logging_file
+                if self.logging_file and not self.logging_file.exists():
+                    self.logging_file.parent.mkdir(parents=True, exist_ok=True)
+                    self.logging_file.touch()
+            if enable_logging_ai:
+                self.logging_file_openai = logging_ai_file
+                if self.logging_file_openai and not self.logging_file_openai.exists():
+                    self.logging_file_openai.parent.mkdir(parents=True, exist_ok=True)
+                    self.logging_file_openai.touch()
+
+        if not under_test:
+            # Vim configuration is used.
+            import vim
+            enable_logging = self._coerce_to_bool(vim.eval(f"g:vim_ai_openai_responses_logging"))
+            enable_ai_logging = self._coerce_to_bool(vim.eval(f"g:vim_ai_openai_responses_ai_logging"))
+            if enable_logging:
+                self.logging_file = Path(vim.eval(f"g:vim_ai_openai_responses_logging_file") or LoggingConfiguration.PLUGIN_DEFAULT_FILE)
+                if self.logging_file and not self.logging_file.exists():
+                    self.logging_file.parent.mkdir(parents=True, exist_ok=True)
+                    self.logging_file.touch()
+            if enable_ai_logging:
+                self.logging_file_openai = Path(vim.eval(f"g:vim_ai_openai_responses_ai_logging_file") or LoggingConfiguration.OPENAI_DEFAULT_FILE)
+                if self.logging_file and not self.logging_file.exists():
+                    self.logging_file_openai.parent.mkdir(parents=True, exist_ok=True)
+                    self.logging_file_openai.touch()
+
+        if enable_logging:
+            self.logger_plugin = self._create_logger("vim-ai-provider-openai-logger", self.logging_file)
+        else:
+            self.logger_plugin = self._create_noop_logger("vim-ai-provider-openai-logger")
+        if enable_logging_ai:
+            self.logger_open_ai = self._create_logger("open-ai-responses-logger", self.logging_file_openai)
+        else:
+            self.logger_open_ai = self._create_noop_logger("open-ai-responses-logger")
+
+    def _create_logger(self, logger_name: str, logging_file: Path):
+        assert logger_name
+        if not logging_file:
+            return self._create_noop_logger(logger_name)
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        file_handler = logging.FileHandler(logging_file)
+        file_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        return logger
+
+    def _create_noop_logger(self, logger_name: str):
+        noop_logger = logging.getLogger(logger_name)
+        noop_logger.addHandler(logging.NullHandler())
+        return noop_logger
 
