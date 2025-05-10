@@ -1,58 +1,60 @@
-*vim-ai-provider-google.txt*
+*vim-ai-provider-openai-responses.txt*
 
 Author: Kevin Cojean <https://kevincojean.com/>
 License: see https://github.com/kevincojean/vim-ai-provider-openai-responses/blob/main/LICENSE
 
-INTRODUCTION                                    *vim-ai-provider-openai-responses*
+*vim-ai-provider-openai-responses*
 
 vim-ai provider plugin for OpenAI's Response API.
 
-CONFIGURATION
+CONFIGURATION                                     *vim-ai-provider-openai-responses-configuration*
 
 You can configure a custom role or use vim-ai's configuration variable for the OpenAI Responses API `g:vim_ai_openai_responses_config`.
 
-The list of options you may pass are numerous and documented by OpenAI:  
-[https://platform.openai.com/docs/api-reference/responses](https://platform.openai.com/docs/api-reference/responses)
+The list of options you may pass are numerous and documented by OpenAI:
+https://platform.openai.com/docs/api-reference/responses
 
-The following flags may be set in your `vimrc` to influence specific behaviours.  
+The following flags may be set in your `vimrc` to influence specific behaviours:
 - `g:vim_ai_openai_responses_enable_autoinstall`: `1` to enable auto-install at start, this is slow.
-- `g:vim_ai_openai_responses_config`: overridable configuration for the openai responses api.
+- `g:vim_ai_openai_responses_config`: overridable configuration for the OpenAI Responses API.
 
-**VimAI configuration example**
+VimAI configuration example:                         *vim-ai-provider-openai-responses-config-example*
 
 ```vim
 let g:vim_ai_openai_responses_config = {
-\  "model": "gpt-4o-mini",
-\  "endpoint_url": "https://api.openai.com/v1/responses",
-\  "stream": "True",
-\  "token_file_path": "~/.config/openai.token",
+\  'model': 'gpt-4o-mini',
+\  'endpoint_url': 'https://api.openai.com/v1/responses',
+\  'stream': 'True',
+\  'token_file_path': '~/.config/openai.token',
 \ }
 ```
 
-**Role configuration example**
+Role configuration example:                          *vim-ai-provider-openai-responses-role-example*
 
 Making an assistant for generating text UML diagrams.
-It is connected to a vector store which has a 600 page pdf documentation of the `plantuml` syntax.
+It is connected to a vector store which has a 600-page pdf documentation of the `plantuml` syntax.
 You force the assistant to use the vector store with the `options.tools.type = file_search` option.
 
-  [umldiagram.assistant]
-  provider = openai_responses
-  options.model = gpt-4.1
-  options.stream = true
-  options.tools.type = file_search
-  options.tools.vector_store_ids = [your_vector_store_uid]
-  options.store = false
-  prompt =
-      You help me write UML diagrams in Vim.
-      Your answers should be enclosed in the following block of markdown syntax:
-      ```plantuml
-      @startuml
-      [your answers go here]
-      @enduml
-      ```
-      Before giving me a diagram, you follow the following steps:
-      1. You proactively identify parts of the diagram which need clarification and you ask me those questions sequentially.
-      2. You suggest the best kind of PlantUML compatible diagram for the use case.
-      3. You generate a diagram. You use the markdown ```plantuml``` syntax.
-      4. Iterate until the user is completely satisfied.
-  ```
+```text
+[umldiagram.assistant]
+provider = openai_responses
+options.model = gpt-4.1
+options.stream = true
+options.tools.type = file_search
+options.tools.vector_store_ids = [your_vector_store_uid]
+options.store = false
+prompt =
+    You help me write UML diagrams in Vim.
+    Your answers should be enclosed in the following block of markdown syntax:
+    ```plantuml
+    @startuml
+    [your answers go here]
+    @enduml
+    ```
+    Before giving me a diagram, you follow the following steps:
+    1. You proactively identify parts of the diagram which need clarification and you ask me those questions sequentially.
+    2. You suggest the best kind of PlantUML compatible diagram for the use case.
+    3. You generate a diagram. You use the markdown ```plantuml``` syntax.
+    4. Iterate until the user is completely satisfied.
+```
+
