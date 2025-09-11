@@ -66,7 +66,23 @@ let g:vim_ai_openai_responses_config = {
 
 ### Role configuration example
 
-Making an assistant for generating text UML diagrams.  
+#### Compatibility with OpenAI Codex
+The Codex LLM model is only compatible with OpenAI's response API.  
+Creating a role for using Codex is easy, and would look something like this :  
+
+```ini
+[codex.mini]
+provider = openai_responses
+options.endpoint_url = https://api.openai.com/v1/responses
+options.model = codex-mini-latest
+options.temperature = 0
+approval_policy = untrusted
+persistence = none
+hide_agent_reasoning = true
+options.hide_agent_reasoning = true
+```
+
+#### Making an assistant for generating text UML diagrams.  
 It is connected to a vector store which has a 600 page pdf documentation of the `plantuml` syntax.
 You force the assistant to use the vector store with the `options.tools.type = file_search` option.
 
