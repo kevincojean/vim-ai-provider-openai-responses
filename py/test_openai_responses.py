@@ -1,3 +1,4 @@
+import random
 import tempfile
 from pathlib import Path
 from typing import Any, Generator
@@ -23,6 +24,15 @@ class TestOpenAiResponsesProvider(TestCase):
             provider = self._create_openai_responses_provider(command_type=command_type, stream=True)
             response = "".join([d['content'] for d in self._open_open_ai_responses_generator(provider)])
             self.assertNotEqual("", response)
+
+    def test_initial_prompt_is_passed_as_an_option(self):
+        for command_type in self.AI_COMMAND_TYPES:
+            initial_prompt = "You only answer with 'I LOVE MAHJONG'."
+            provider = self._create_openai_responses_provider(
+                command_type=command_type,
+                extra_options={'initial_prompt': initial_prompt})
+            response = "".join([d['content'] for d in self._open_open_ai_responses_generator(provider)])
+            self.assertIn('I LOVE MAHJONG', response)
 
     def test_logging(self):
         provider = self._create_openai_responses_provider(
@@ -75,14 +85,17 @@ class TestOpenAiResponsesProvider(TestCase):
             stream: bool = False,
             logging_configuration: LoggingConfiguration = LoggingConfiguration(enabled=False, file=None),
             logging_ai_configuration: LoggingConfiguration = LoggingConfiguration(enabled=False, file=None),
+            extra_options=None
     ):
+        if extra_options is None:
+            extra_options = {}
         return OpenAiResponsesProvider(
             command_type=command_type,
             raw_options={
                 "provider": "openai_responses",
                 "stream": stream,
                 "model": TestOpenAiResponsesProvider.TEST_MODEL,
-            },
+            } | extra_options,
             utils=self.TestAIUtils(),
             under_test=True,
             logging_configuration=logging_configuration,
