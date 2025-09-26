@@ -92,6 +92,8 @@ class OpenAiResponsesProvider:
         """
         self.logger_plugin.debug("Prompting with: %s", messages)
         open_ai_messages = [self._map_to_response_input_param(m) for m in messages]
+        if self._initial_prompt_enabled() and not self._initial_prompt_already_included(open_ai_messages):
+            open_ai_messages = [self._make_initial_prompt_message()] + open_ai_messages
         self.logger_open_ai.debug("Prompting with: %s", open_ai_messages)
         self.logger_plugin.debug("Options: %s", self.options)
         openai_response = openai.responses.create(
@@ -195,8 +197,24 @@ class OpenAiResponsesProvider:
         else:
             raise Exception(f"Handling of `{first_content_element.__class__.__name__}` messages not implemented.")
 
+    def _initial_prompt_enabled(self) -> bool:
+        return bool(self.options['initial_prompt'])
+
+    def _initial_prompt_already_included(self, open_ai_messages):
+        messages_contents = set(m['content'].strip() for m in open_ai_messages)
+        initial_prompt = self._make_initial_prompt_message()
+        return initial_prompt['content'] in messages_contents
+
+    def _make_initial_prompt_message(self) -> dict:
+        return {
+                'content': self.options.get('initial_prompt', '').strip(),
+                'role': 'user',
+                'type': 'message',
+        }
+
     def _set_options(self, raw_options: Mapping[str, str], under_test: bool = False) -> None:
         self.options = raw_options or {}
+        self.options['initial_prompt'] = self._set_options_initial_prompt(raw_options)
         self.options['stream'] = self._coerce_to_bool(self.options['stream']) \
             if 'stream' in self.options \
             else False
@@ -207,6 +225,14 @@ class OpenAiResponsesProvider:
         for key, value in self.options.items():
             if isinstance(value, str) and value.replace('.', '', 1).isdigit():
                 self.options[key] = float(value)
+
+    def _set_options_initial_prompt(self, raw_options: dict):
+        if 'initial_prompt' not in raw_options:
+            return None
+        if isinstance(raw_options['initial_prompt'], str):
+            return raw_options['initial_prompt'].strip()
+        if isinstance(raw_options['initial_prompt'], list):
+            return '\n'.join(raw_options['initial_prompt']).strip()
 
     def _coerce_to_bool(self, value: str) -> bool:
         if value is None:
@@ -286,4 +312,5 @@ class OpenAiResponsesProvider:
         noop_logger = logging.getLogger(logger_name)
         noop_logger.addHandler(logging.NullHandler())
         return noop_logger
+
 
